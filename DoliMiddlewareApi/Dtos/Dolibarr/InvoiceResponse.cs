@@ -1,4 +1,4 @@
-namespace DoliMiddlewareApi.Services;
+namespace DoliMiddlewareApi.Dtos.Dolibarr;
 
 public class InvoiceResponse
 {
