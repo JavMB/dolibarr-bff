@@ -1,0 +1,81 @@
+﻿
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: dolibarr-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword"
+      MYSQL_DATABASE: "dolibarr"
+      MYSQL_USER: "dolibarr"
+      MYSQL_PASSWORD: "12345678"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: dolibarr-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   command: redis-server --appendonly yes
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+  #   restart: unless-stopped
+
+  dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: dolibarr-web
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DOLI_DB_TYPE: "mysqli"
+      DOLI_DB_HOST: "mysql"
+      DOLI_DB_HOST_PORT: "3306"
+      DOLI_DB_USER: "dolibarr"
+      DOLI_DB_PASSWORD: "12345678"
+      DOLI_DB_NAME: "dolibarr"
+      DOLI_ADMIN_LOGIN: "admin"
+      DOLI_ADMIN_PASSWORD: "12345678"
+      DOLI_URL_ROOT: "http://localhost"
+    ports:
+      - "80:80"
+    volumes:
+      - dolibarr_documents:/var/www/documents
+      - dolibarr_custom:/var/www/html/custom
+    restart: unless-stopped
+
+  # dolimiddlewareapi:
+  #   image: dolimiddlewareapi
+  #   build:
+  #     context: .
+  #     dockerfile: DoliMiddlewareApi/Dockerfile
+  #   container_name: dolibarr-middleware-api
+  #   depends_on:
+  #     - dolibarr
+  #     - mysql
+  #   ports:
+  #     - "5000:8080"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #   restart: unless-stopped
+
+volumes:
+  mysql_data:
+  # redis_data:
+  dolibarr_documents:
+  dolibarr_custom:
+
