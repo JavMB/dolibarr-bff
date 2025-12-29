@@ -1,0 +1,37 @@
+## Build artifacts
+bin/
+obj/
+/packages/
+out/
+
+## IDE - Rider / IntelliJ
+.idea/
+*.iml
+riderModule.iml
+/_ReSharper.Caches/
+.idea_modules/
+
+## IDE - Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+
+## Environment variables
+.env
+.env.local
