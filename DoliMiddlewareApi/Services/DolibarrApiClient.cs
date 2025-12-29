@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using DoliMiddlewareApi.Dtos;
-using DoliMiddlewareApi.Dtos.Enums;
 using DoliMiddlewareApi.Exceptions;
 
 namespace DoliMiddlewareApi.Services;
@@ -23,9 +22,17 @@ public class DolibarrApiClient
         return MapToInvoiceDto(data);
     }
 
-    public async Task<List<InvoiceDto>> GetInvoicesAsync()
+    public async Task<List<InvoiceDto>> GetInvoicesAsync(
+        int limit = 50,
+        int page = 1,
+        string? status = null)
     {
-        var dataList = await GetListAsync<InvoiceResponse>("invoices");
+        var endpoint = $"invoices?limit={limit}&page={page-1}";
+
+        if (!string.IsNullOrEmpty(status))
+            endpoint += $"&status={status}";
+
+        var dataList = await GetListAsync<InvoiceResponse>(endpoint);
         return dataList.Select(MapToInvoiceDto).ToList();
     }
 
@@ -47,14 +54,16 @@ public class DolibarrApiClient
 
             ClientId = int.TryParse(invoiceResponse.socid, out int clientId) ? clientId : 0,
 
-            Total = decimal.TryParse(invoiceResponse.total_ttc, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal total)
+            Total = decimal.TryParse(invoiceResponse.total_ttc, NumberStyles.Any, CultureInfo.InvariantCulture,
+                out decimal total)
                 ? Math.Round(total, 2)
                 : null,
-            RemainToPay = decimal.TryParse(invoiceResponse.remaintopay, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal remain)
+            RemainToPay = decimal.TryParse(invoiceResponse.remaintopay, NumberStyles.Any, CultureInfo.InvariantCulture,
+                out decimal remain)
                 ? Math.Round(remain, 2)
                 : null,
 
-            Status = InvoiceStatusMapper.FromDolibarrStatus(invoiceResponse.statut ?? "0")
+            Status = invoiceResponse.statut ?? "unknown"
         };
     }
 

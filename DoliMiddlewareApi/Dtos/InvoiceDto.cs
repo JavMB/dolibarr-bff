@@ -1,5 +1,3 @@
-using DoliMiddlewareApi.Dtos.Enums;
-
 namespace DoliMiddlewareApi.Dtos;
 
 public class InvoiceDto
@@ -11,7 +9,7 @@ public class InvoiceDto
     public int ClientId { get; set; }
     public decimal? Total { get; set; }
     public decimal? RemainToPay { get; set; }
-    public InvoiceStatus Status { get; set; }
+    public string Status { get; set; }
   
     
     

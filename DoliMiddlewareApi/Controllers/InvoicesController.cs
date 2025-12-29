@@ -15,9 +15,12 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetInvoices()
+    public async Task<IActionResult> GetInvoices(
+        [FromQuery] int limit = 50,
+        [FromQuery] int page = 0,
+        [FromQuery] string? status = null)
     {
-        var invoices = await _dolibarrClient.GetInvoicesAsync();
+        var invoices = await _dolibarrClient.GetInvoicesAsync(limit, page, status);
         return Ok(invoices);
     }
 
