@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using DoliMiddlewareApi.Dtos;
+using DoliMiddlewareApi.Dtos.Dolibarr;
 using DoliMiddlewareApi.Exceptions;
 
 namespace DoliMiddlewareApi.Services;
@@ -16,12 +17,12 @@ public class DolibarrApiClient
     }
 
     // ===== FACTURAS =====
-    public async Task<InvoiceDto> GetInvoiceAsync(int id)
+    public async Task<InvoiceDetailDto> GetInvoiceAsync(int id)
     {
-        var data = await GetAsync<InvoiceResponse>($"invoices/{id}");
-        return MapToInvoiceDto(data);
+        var data = await GetAsync<InvoiceDetailResponse>($"invoices/{id}");
+        return MapToInvoiceDetailDto(data);
     }
-
+    
     public async Task<List<InvoiceDto>> GetInvoicesAsync(
         int limit = 50,
         int page = 1,
@@ -69,6 +70,43 @@ public class DolibarrApiClient
             Status = ConvertStatusToWord(invoiceResponse.statut)
         };
     }
+    private InvoiceDetailDto MapToInvoiceDetailDto(InvoiceDetailResponse data)
+    {
+        // Mapear campos base de la factura
+        var baseDto = MapToInvoiceDto(data);
+
+        return new InvoiceDetailDto
+        {
+            Id = baseDto.Id,
+            Number = baseDto.Number,
+            Date = baseDto.Date,
+            ExpireDate = baseDto.ExpireDate,
+            ClientId = baseDto.ClientId,
+            Total = baseDto.Total,
+            RemainToPay = baseDto.RemainToPay,
+            Status = baseDto.Status,
+            
+            Lines = data.Lines?.Select(MapToInvoiceLineDto).ToList() ?? new List<InvoiceLineDto>()
+        };
+    }
+
+    private InvoiceLineDto MapToInvoiceLineDto(InvoiceLineResponse lineResponse)
+    {
+        return new InvoiceLineDto
+        {
+            Id = int.TryParse(lineResponse.id, out int id) ? id : 0,
+            Description = lineResponse.description ?? lineResponse.desc ?? "",
+            Quantity = decimal.TryParse(lineResponse.qty, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qty)
+                ? qty : 0,
+            UnitPrice = decimal.TryParse(lineResponse.subprice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price)
+                ? Math.Round(price, 2) : 0,
+            TaxRate = decimal.TryParse(lineResponse.tva_tx, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal tax)
+                ? Math.Round(tax, 2) : 0,
+            Total = decimal.TryParse(lineResponse.total_ttc, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal total)
+                ? Math.Round(total, 2) : 0
+        };
+    }
+    
 
     private static string ConvertStatusToWord(string? statusNumber)
     {
