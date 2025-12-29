@@ -27,11 +27,14 @@ public class DolibarrApiClient
         int page = 1,
         string? status = null)
     {
-        var endpoint = $"invoices?limit={limit}&page={page-1}";
+        // empieza por 1 para el frontend
+        var endpoint = $"invoices?limit={limit}&page={page - 1}";
 
         if (!string.IsNullOrEmpty(status))
+        {
             endpoint += $"&status={status}";
-
+        }
+        
         var dataList = await GetListAsync<InvoiceResponse>(endpoint);
         return dataList.Select(MapToInvoiceDto).ToList();
     }
@@ -63,11 +66,21 @@ public class DolibarrApiClient
                 ? Math.Round(remain, 2)
                 : null,
 
-            Status = invoiceResponse.statut ?? "unknown"
+            Status = ConvertStatusToWord(invoiceResponse.statut)
         };
     }
 
-
+    private static string ConvertStatusToWord(string? statusNumber)
+    {
+        return statusNumber switch
+        {
+            "0" => "draft",
+            "1" => "unpaid",
+            "2" => "paid",
+            "3" => "cancelled",
+            _ => "unknown"
+        };
+    }
     // ===== MÉTODOS GENÉRICOS =====
     private async Task<T> GetAsync<T>(string endpoint) where T : class
     {
