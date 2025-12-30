@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,8 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetInvoices(
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
         [FromQuery] [Range(1, int.MaxValue)] int page = 1,
         [FromQuery] string? status = null)
@@ -26,7 +28,9 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetInvoice(int id)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<InvoiceDetailDto>> GetInvoice(int id)
     {
         var invoice = await _dolibarrClient.GetInvoiceAsync(id);
         return Ok(invoice);
