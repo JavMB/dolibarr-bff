@@ -23,7 +23,7 @@ public class DolibarrApiClient
         var data = await GetAsync<InvoiceDetailResponse>($"invoices/{id}");
         return InvoiceMapper.MapToInvoiceDetailDto(data);
     }
-    
+
     public async Task<List<InvoiceDto>> GetInvoicesAsync(
         int limit = 50,
         int page = 1,
@@ -36,11 +36,11 @@ public class DolibarrApiClient
         {
             endpoint += $"&status={status}";
         }
-        
+
         var dataList = await GetListAsync<InvoiceResponse>(endpoint);
         return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
     }
-    
+
     // ===== MÉTODOS GENÉRICOS =====
     private async Task<T> GetAsync<T>(string endpoint) where T : class
     {
@@ -48,7 +48,7 @@ public class DolibarrApiClient
         await HandleErrorsAsync(response, endpoint);
 
         return await response.Content.ReadFromJsonAsync<T>()
-               ?? throw new BadRequestException("Failed to deserialize response");
+               ?? throw new ApiException($"Failed to deserialize response from Dolibarr for endpoint '{endpoint}'");
     }
 
     private async Task<List<T>> GetListAsync<T>(string endpoint) where T : class
@@ -56,7 +56,9 @@ public class DolibarrApiClient
         var response = await _httpClient.GetAsync(endpoint);
         await HandleErrorsAsync(response, endpoint);
 
-        return await response.Content.ReadFromJsonAsync<List<T>>() ?? new List<T>();
+        return await response.Content.ReadFromJsonAsync<List<T>>()
+               ?? throw new ApiException(
+                   $"Failed to deserialize list response from Dolibarr for endpoint '{endpoint}'");
     }
 
     private async Task HandleErrorsAsync(HttpResponseMessage response, string endpoint)
