@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using DoliMiddlewareApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +18,7 @@ public class InvoicesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetInvoices(
         [FromQuery] int limit = 50,
-        [FromQuery] int page = 0,
+        [FromQuery] [Range(1, int.MaxValue)] int page = 1,
         [FromQuery] string? status = null)
     {
         var invoices = await _dolibarrClient.GetInvoicesAsync(limit, page, status);
