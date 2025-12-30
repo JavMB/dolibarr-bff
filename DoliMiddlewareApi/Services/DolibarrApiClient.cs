@@ -20,7 +20,7 @@ public class DolibarrApiClient
     // ===== FACTURAS =====
     public async Task<InvoiceDetailDto> GetInvoiceAsync(int id)
     {
-        var data = await GetAsync<InvoiceDetailResponse>($"invoices/{id}");
+        var data = await GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
         return InvoiceMapper.MapToInvoiceDetailDto(data);
     }
 
@@ -37,31 +37,31 @@ public class DolibarrApiClient
             endpoint += $"&status={status}";
         }
 
-        var dataList = await GetListAsync<InvoiceResponse>(endpoint);
+        var dataList = await GetCollectionAsync<InvoiceResponse>(endpoint);
         return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
     }
 
     // ===== MÉTODOS GENÉRICOS =====
-    private async Task<T> GetAsync<T>(string endpoint) where T : class
+    private async Task<T> GetResourceAsync<T>(string endpoint) where T : class
     {
         var response = await _httpClient.GetAsync(endpoint);
-        await HandleErrorsAsync(response, endpoint);
+        await EnsureSuccessOrThrowAsync(response, endpoint);
 
         return await response.Content.ReadFromJsonAsync<T>()
                ?? throw new ApiException($"Failed to deserialize response from Dolibarr for endpoint '{endpoint}'");
     }
 
-    private async Task<List<T>> GetListAsync<T>(string endpoint) where T : class
+    private async Task<List<T>> GetCollectionAsync<T>(string endpoint) where T : class
     {
         var response = await _httpClient.GetAsync(endpoint);
-        await HandleErrorsAsync(response, endpoint);
+        await EnsureSuccessOrThrowAsync(response, endpoint);
 
         return await response.Content.ReadFromJsonAsync<List<T>>()
                ?? throw new ApiException(
                    $"Failed to deserialize list response from Dolibarr for endpoint '{endpoint}'");
     }
 
-    private async Task HandleErrorsAsync(HttpResponseMessage response, string endpoint)
+    private async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, string endpoint)
     {
         if (response.IsSuccessStatusCode) return;
 
