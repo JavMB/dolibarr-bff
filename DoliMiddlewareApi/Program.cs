@@ -35,25 +35,71 @@ app.UseExceptionHandler(errorApp =>
     {
         var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
         var exception = exceptionHandler?.Error;
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        var env = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
 
-        var (statusCode, message) = exception switch
+        // PASO 1: Clasificar el tipo de error
+        var (statusCode, title, detail, isExpectedError) = exception switch
         {
-            NotFoundException notFound => (StatusCodes.Status404NotFound, notFound.Message),
-            UnauthorizedException unauthorized => (StatusCodes.Status401Unauthorized, unauthorized.Message),
-            ForbiddenException forbidden => (StatusCodes.Status403Forbidden, forbidden.Message),
-            BadRequestException badRequest => (StatusCodes.Status400BadRequest, badRequest.Message),
-            ApiException apiEx => (StatusCodes.Status500InternalServerError, apiEx.Message),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
+            // ERRORES ESPERADOS (del negocio/cliente) - OK mostrar detalles
+            NotFoundException notFound => (StatusCodes.Status404NotFound, "Not Found", notFound.Message, true),
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized", "Invalid API credentials", true),
+            ForbiddenException forbidden => (StatusCodes.Status403Forbidden, "Forbidden", forbidden.Message, true),
+            BadRequestException badRequest => (StatusCodes.Status400BadRequest, "Bad Request", badRequest.Message, true),
+            
+            // ERROR DE API EXTERNA (Dolibarr) - Mostrar que es externo pero no detalles internos
+            ApiException apiEx => (StatusCodes.Status500InternalServerError, "External Service Error", 
+                env.IsDevelopment() ? apiEx.Message : "The external service is temporarily unavailable", false),
+            
+            // ERRORES INESPERADOS (bugs del programador) 
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", 
+                env.IsDevelopment() 
+                    ? exception?.Message ?? "An unexpected error occurred"  // DESARROLLO: muestra el error real
+                    : "An unexpected error occurred. Please try again later.", // PRODUCCIÓN: mensaje genérico
+                false)
         };
 
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json";
-
-        await context.Response.WriteAsJsonAsync(new
+        // PASO 2: SIEMPRE loguear (crítico para debugging en producción)
+        if (isExpectedError)
         {
-            error = message,
-            statusCode
-        });
+            // Errores esperados: log como Warning (no son bugs, son flujo normal)
+            logger.LogWarning(exception, 
+                "Expected error: {ExceptionType} | Path: {Path} | Message: {Message}",
+                exception?.GetType().Name, context.Request.Path, exception?.Message);
+        }
+        else
+        {
+            // Errores inesperados: log como Error (son bugs que HAY QUE ARREGLAR)
+            logger.LogError(exception, 
+                "UNHANDLED EXCEPTION: {ExceptionType} | Path: {Path} | Message: {Message} | StackTrace: {StackTrace}",
+                exception?.GetType().Name, context.Request.Path, exception?.Message, exception?.StackTrace);
+        }
+
+        // PASO 3: Construir respuesta ProblemDetails (estándar RFC 7807)
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+
+        var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail,
+            Instance = context.Request.Path
+        };
+
+        // PASO 4: EN DESARROLLO añadir info extra para debugging
+        if (env.IsDevelopment() && !isExpectedError)
+        {
+            problemDetails.Extensions["exceptionType"] = exception?.GetType().Name;
+            problemDetails.Extensions["stackTrace"] = exception?.StackTrace;
+            if (exception?.InnerException != null)
+            {
+                problemDetails.Extensions["innerException"] = exception.InnerException.Message;
+                problemDetails.Extensions["innerStackTrace"] = exception.InnerException.StackTrace;
+            }
+        }
+
+        await context.Response.WriteAsJsonAsync(problemDetails);
     });
 });
 
