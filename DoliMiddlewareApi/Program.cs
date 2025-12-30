@@ -15,8 +15,9 @@ builder.Services.AddControllers()
         // Usar camelCase para propiedades (id en vez de Id)
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Swagger/OpenAPI con Swashbuckle (genera schemas completos)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 
 // Typed Client - Inyecta HttpClient directamente en DolibarrApiClient
@@ -106,7 +107,11 @@ app.UseExceptionHandler(errorApp =>
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DoliMiddlewareApi v1");
+    });
 }
 
 app.UseHttpsRedirection();
