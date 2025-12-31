@@ -1,12 +1,7 @@
-using System.Globalization;
 using System.Net;
-using System.Net.Http.Json;
-using DoliMiddlewareApi.Dtos;
-using DoliMiddlewareApi.Dtos.Dolibarr;
 using DoliMiddlewareApi.Exceptions;
-using DoliMiddlewareApi.Mappers;
 
-namespace DoliMiddlewareApi.Services;
+namespace DoliMiddlewareApi.Services.Clients;
 
 public class DolibarrApiClient
 {
@@ -16,33 +11,10 @@ public class DolibarrApiClient
     {
         _httpClient = httpClient;
     }
-
-    // ===== FACTURAS =====
-    public async Task<InvoiceDetailDto> GetInvoiceAsync(int id)
-    {
-        var data = await GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
-        return InvoiceMapper.MapToInvoiceDetailDto(data);
-    }
-
-    public async Task<List<InvoiceDto>> GetInvoicesAsync(
-        int limit = 50,
-        int page = 1,
-        string? status = null)
-    {
-        // empieza por 1 para el frontend
-        var endpoint = $"invoices?limit={limit}&page={page - 1}";
-
-        if (!string.IsNullOrEmpty(status))
-        {
-            endpoint += $"&status={status}";
-        }
-
-        var dataList = await GetCollectionAsync<InvoiceResponse>(endpoint);
-        return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
-    }
-
+    
+    
     // ===== MÉTODOS GENÉRICOS =====
-    private async Task<T> GetResourceAsync<T>(string endpoint) where T : class
+    public async Task<T> GetResourceAsync<T>(string endpoint) where T : class
     {
         var response = await _httpClient.GetAsync(endpoint);
         await EnsureSuccessOrThrowAsync(response, endpoint);
@@ -51,7 +23,7 @@ public class DolibarrApiClient
                ?? throw new ApiException($"Failed to deserialize response from Dolibarr for endpoint '{endpoint}'");
     }
 
-    private async Task<List<T>> GetCollectionAsync<T>(string endpoint) where T : class
+    public async Task<List<T>> GetCollectionAsync<T>(string endpoint) where T : class
     {
         var response = await _httpClient.GetAsync(endpoint);
         await EnsureSuccessOrThrowAsync(response, endpoint);
@@ -61,6 +33,21 @@ public class DolibarrApiClient
                    $"Failed to deserialize list response from Dolibarr for endpoint '{endpoint}'");
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     private async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, string endpoint)
     {
         if (response.IsSuccessStatusCode) return;

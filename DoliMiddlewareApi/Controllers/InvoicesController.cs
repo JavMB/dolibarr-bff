@@ -9,11 +9,11 @@ namespace DoliMiddlewareApi.Controllers;
 [Route("api/[controller]")]
 public class InvoicesController : ControllerBase
 {
-    private readonly DolibarrApiClient _dolibarrClient;
+    private readonly InvoiceService _invoiceService;
 
-    public InvoicesController(DolibarrApiClient dolibarrClient)
+    public InvoicesController(InvoiceService invoiceService)
     {
-        _dolibarrClient = dolibarrClient;
+        _invoiceService = invoiceService;
     }
 
     [HttpGet]
@@ -24,7 +24,7 @@ public class InvoicesController : ControllerBase
         [FromQuery] [Range(1, int.MaxValue)] int page = 1,
         [FromQuery] string? status = null)
     {
-        var invoices = await _dolibarrClient.GetInvoicesAsync(limit, page, status);
+        var invoices = await _invoiceService.GetInvoicesAsync(limit, page, status);
         return Ok(invoices);
     }
 
@@ -34,7 +34,7 @@ public class InvoicesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<InvoiceDetailDto>> GetInvoice(int id)
     {
-        var invoice = await _dolibarrClient.GetInvoiceAsync(id);
+        var invoice = await _invoiceService.GetInvoiceAsync(id);
         return Ok(invoice);
     }
 }

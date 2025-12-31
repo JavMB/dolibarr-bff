@@ -1,5 +1,6 @@
 using DoliMiddlewareApi.Exceptions;
 using DoliMiddlewareApi.Services;
+using DoliMiddlewareApi.Services.Clients;
 using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,9 @@ builder.Services.AddHttpClient<DolibarrApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Dolibarr:ApiUrl"]!);
     client.DefaultRequestHeaders.Add("DOLAPIKEY", builder.Configuration["Dolibarr:ApiKey"]!);
 });
+
+// Registrar servicios de negocio
+builder.Services.AddScoped<InvoiceService>();
 
 var app = builder.Build();
 
