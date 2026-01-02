@@ -18,6 +18,7 @@ public class InvoicesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(List<InvoiceDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
@@ -30,9 +31,10 @@ public class InvoicesController : ControllerBase
 
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(InvoiceDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<InvoiceDetailDto>> GetInvoice(int id)
+    public async Task<ActionResult<InvoiceDetailDto>> GetInvoice([Range(1, int.MaxValue)] int id)
     {
         var invoice = await _invoiceService.GetInvoiceAsync(id);
         return Ok(invoice);
