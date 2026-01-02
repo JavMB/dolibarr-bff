@@ -12,4 +12,7 @@ public class InvoiceResponse
     public string? total_ttc { get; set; }
     public string? remaintopay { get; set; }
     public string? statut { get; set; }
+
+    public string? note_public { get; set; }
+    public string? note_private { get; set; }
 }

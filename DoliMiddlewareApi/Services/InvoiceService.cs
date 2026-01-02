@@ -2,6 +2,7 @@ using System.Globalization;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.command;
 using DoliMiddlewareApi.Dtos.Dolibarr;
+using DoliMiddlewareApi.Exceptions;
 using DoliMiddlewareApi.Mappers;
 using DoliMiddlewareApi.Services.Clients;
 
@@ -65,5 +66,23 @@ public class InvoiceService
         var responseBody = await _apiClient.PostAsync("invoices", requestBody);
         
         return int.Parse(responseBody);
+    }
+
+    public async Task UpdateInvoiceAsync(int id, UpdateInvoiceDto dto)
+    {
+        // GET el JSON completo
+        var current = await _apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
+        if (current.statut != "0") throw new ForbiddenException("Solo drafts");
+
+        // Modifica solo campos que Dolibarr permite en PUT
+        if (dto.Number != null) current.@ref = dto.Number;
+        if (dto.NotePublic != null) current.note_public = dto.NotePublic;
+        if (dto.NotePrivate != null) current.note_private = dto.NotePrivate;
+        current.statut = dto.Status == "unpaid" ? "1" : "0";
+        if (dto.ExpireDate.HasValue) current.date_lim_reglement = ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds();
+
+        // No tocar: date, socid, lines (Dolibarr no los cambia en PUT)
+
+        await _apiClient.PutAsync($"invoices/{id}", current);
     }
 }

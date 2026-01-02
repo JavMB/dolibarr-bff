@@ -41,18 +41,14 @@ public class DolibarrApiClient
         // porque devuelve el id como response
         return await response.Content.ReadAsStringAsync();
     }
-
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    public async Task<string> PutAsync(string endpoint, object requestBody)
+    {
+        var response = await _httpClient.PutAsJsonAsync(endpoint, requestBody);
+        await EnsureSuccessOrThrowAsync(response, endpoint);
+        
+        return await response.Content.ReadAsStringAsync();
+    }
     
     
     
