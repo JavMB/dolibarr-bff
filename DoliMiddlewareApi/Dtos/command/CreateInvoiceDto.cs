@@ -18,6 +18,8 @@ public class CreateInvoiceDto
     public string? NotePublic { get; set; }
     public string? NotePrivate { get; set; }
     
+    public string Status { get; set; } = "draft";
+    
     [Required]
     [MinLength(1)]
     public List<CreateInvoiceLineDto> Lines { get; set; } = new();

@@ -1,4 +1,6 @@
+using System.Globalization;
 using DoliMiddlewareApi.Dtos;
+using DoliMiddlewareApi.Dtos.command;
 using DoliMiddlewareApi.Dtos.Dolibarr;
 using DoliMiddlewareApi.Mappers;
 using DoliMiddlewareApi.Services.Clients;
@@ -35,5 +37,33 @@ public class InvoiceService
 
         var dataList = await _apiClient.GetCollectionAsync<InvoiceResponse>(endpoint);
         return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
+    }
+
+    public async Task<int> CreateInvoiceAsync(CreateInvoiceDto dto)
+    {
+        var requestBody = new
+        {
+            socid = dto.ClientId.ToString(),
+            type = "0",
+            statut = dto.Status == "unpaid" ? "1" : "0",
+            date = ((DateTimeOffset)dto.Date).ToUnixTimeSeconds().ToString(),
+            date_lim_reglement = dto.ExpireDate.HasValue 
+                ? ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds().ToString() 
+                : null,
+            @ref = dto.Reference,
+            note_public = dto.NotePublic,
+            note_private = dto.NotePrivate,
+            lines = dto.Lines.Select(line => new
+            {
+                desc = line.Description,
+                qty = line.Quantity.ToString(CultureInfo.InvariantCulture),
+                subprice = line.UnitPrice.ToString(CultureInfo.InvariantCulture),
+                tva_tx = line.TaxRate.ToString(CultureInfo.InvariantCulture)
+            }).ToArray()
+        };
+
+        var responseBody = await _apiClient.PostAsync("invoices", requestBody);
+        
+        return int.Parse(responseBody);
     }
 }

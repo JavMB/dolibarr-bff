@@ -32,6 +32,15 @@ public class DolibarrApiClient
                ?? throw new ApiException(
                    $"Failed to deserialize list response from Dolibarr for endpoint '{endpoint}'");
     }
+    
+    public async Task<string> PostAsync(string endpoint, object requestBody)
+    {
+        var response = await _httpClient.PostAsJsonAsync(endpoint, requestBody);
+        await EnsureSuccessOrThrowAsync(response, endpoint);
+
+        // porque devuelve el id como response
+        return await response.Content.ReadAsStringAsync();
+    }
 
     
     

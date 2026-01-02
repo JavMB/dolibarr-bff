@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using DoliMiddlewareApi.Dtos;
+using DoliMiddlewareApi.Dtos.command;
 using DoliMiddlewareApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,5 +39,15 @@ public class InvoicesController : ControllerBase
     {
         var invoice = await _invoiceService.GetInvoiceAsync(id);
         return Ok(invoice);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)] // Devuelve el ID creado
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<int>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
+    {
+        var invoiceId= await _invoiceService.CreateInvoiceAsync(createInvoiceDto);
+        return CreatedAtAction(nameof(GetInvoice), new { id = invoiceId }, invoiceId);
     }
 }
