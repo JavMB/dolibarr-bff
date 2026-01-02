@@ -62,4 +62,16 @@ public class InvoicesController : ControllerBase
         await _invoiceService.UpdateInvoiceAsync(id, updateInvoiceDto);
         return NoContent();
     }
+
+    [HttpPost("{id:int}/lines")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<string>> AddInvoiceLine([Range(1, int.MaxValue)] int id, [FromBody] CreateInvoiceLineDto lineDto)
+    {
+        var result = await _invoiceService.AddInvoiceLineAsync(id, lineDto);
+        return CreatedAtAction(nameof(GetInvoice), new { id }, result);
+    }
 }

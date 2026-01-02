@@ -68,6 +68,22 @@ public class InvoiceService
         return int.Parse(responseBody);
     }
 
+    public async Task<string> AddInvoiceLineAsync(int invoiceId, CreateInvoiceLineDto lineDto)
+    {
+        var invoice = await _apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{invoiceId}");
+        if (invoice.statut != "0") throw new ForbiddenException("Solo se pueden añadir líneas a facturas en borrador");
+
+        var requestBody = new
+        {
+            desc = lineDto.Description,
+            qty = lineDto.Quantity.ToString(CultureInfo.InvariantCulture),
+            subprice = lineDto.UnitPrice.ToString(CultureInfo.InvariantCulture),
+            tva_tx = lineDto.TaxRate.ToString(CultureInfo.InvariantCulture)
+        };
+
+        return await _apiClient.PostAsync($"invoices/{invoiceId}/lines", requestBody);
+    }
+
     public async Task UpdateInvoiceAsync(int id, UpdateInvoiceDto dto)
     {
         // GET el JSON completo
@@ -85,4 +101,5 @@ public class InvoiceService
 
         await _apiClient.PutAsync($"invoices/{id}", current);
     }
+    
 }
