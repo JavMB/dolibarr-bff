@@ -8,18 +8,11 @@ using DoliMiddlewareApi.Services.Clients;
 
 namespace DoliMiddlewareApi.Services;
 
-public class InvoiceService
+public class InvoiceService(IDolibarrApiClient apiClient)
 {
-    private readonly IDolibarrApiClient _apiClient;
-
-    public InvoiceService(IDolibarrApiClient apiClient)
-    {
-        _apiClient = apiClient;
-    }
-
     public async Task<InvoiceDetailDto> GetInvoiceAsync(int id)
     {
-        var data = await _apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
+        var data = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
         return InvoiceMapper.MapToInvoiceDetailDto(data);
     }
 
@@ -36,7 +29,7 @@ public class InvoiceService
             endpoint += $"&status={status}";
         }
 
-        var dataList = await _apiClient.GetCollectionAsync<InvoiceResponse>(endpoint);
+        var dataList = await apiClient.GetCollectionAsync<InvoiceResponse>(endpoint);
         return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
     }
 
@@ -63,14 +56,14 @@ public class InvoiceService
             }).ToArray()
         };
 
-        var responseBody = await _apiClient.PostAsync("invoices", requestBody);
+        var responseBody = await apiClient.PostAsync("invoices", requestBody);
 
         return int.Parse(responseBody);
     }
 
     public async Task<string> AddInvoiceLineAsync(int invoiceId, CreateInvoiceLineDto lineDto)
     {
-        var invoice = await _apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{invoiceId}");
+        var invoice = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{invoiceId}");
         if (invoice.statut != "0") throw new ForbiddenException("Solo se pueden añadir líneas a facturas en borrador");
 
         var requestBody = new
@@ -81,13 +74,13 @@ public class InvoiceService
             tva_tx = lineDto.TaxRate.ToString(CultureInfo.InvariantCulture)
         };
 
-        return await _apiClient.PostAsync($"invoices/{invoiceId}/lines", requestBody);
+        return await apiClient.PostAsync($"invoices/{invoiceId}/lines", requestBody);
     }
 
     public async Task UpdateInvoiceAsync(int id, UpdateInvoiceDto dto)
     {
         // GET el JSON completo
-        var current = await _apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
+        var current = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
         if (current.statut != "0") throw new ForbiddenException("Solo drafts");
 
         // Modifica solo campos que Dolibarr permite en PUT
@@ -99,7 +92,7 @@ public class InvoiceService
 
         // No tocar: date, socid, lines (Dolibarr no los cambia en PUT)
 
-        await _apiClient.PutAsync($"invoices/{id}", current);
+        await apiClient.PutAsync($"invoices/{id}", current);
     }
     
 }

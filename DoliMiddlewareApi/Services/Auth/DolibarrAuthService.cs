@@ -22,11 +22,11 @@ public sealed class DolibarrAuthService(IDolibarrApiClient apiClient)
         }
 
         var response = JsonSerializer.Deserialize<TokenResponse>(responseString);
-        if (response == null || string.IsNullOrEmpty(response.AccessToken))
+        if (response == null || string.IsNullOrEmpty(response.success.token))
         {
             throw new UnauthorizedException("Respuesta inválida de Dolibarr");
         }
 
-        return response.AccessToken;
+        return response.success.token;
     }
 }

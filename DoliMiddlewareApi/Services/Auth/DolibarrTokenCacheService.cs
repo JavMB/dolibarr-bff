@@ -9,9 +9,8 @@ public class DolibarrTokenCacheService(IHttpContextAccessor httpContextAccessor,
     public string? GetDolibarrToken()
     {
         var context = httpContextAccessor.HttpContext;
-        if (context?.User.Identity?.IsAuthenticated == true)
         {
-            var sessionIdClaim = context.User.Claims.FirstOrDefault(c => c.Type == "sessionId");
+            var sessionIdClaim = context?.User.Claims.FirstOrDefault(c => c.Type == "sessionId");
             if (sessionIdClaim != null && cache.TryGetValue(sessionIdClaim.Value, out string? dolibarrToken))
             {
                 return dolibarrToken;
