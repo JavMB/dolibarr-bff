@@ -10,9 +10,9 @@ namespace DoliMiddlewareApi.Services;
 
 public class InvoiceService
 {
-    private readonly DolibarrApiClient _apiClient;
+    private readonly IDolibarrApiClient _apiClient;
 
-    public InvoiceService(DolibarrApiClient apiClient)
+    public InvoiceService(IDolibarrApiClient apiClient)
     {
         _apiClient = apiClient;
     }

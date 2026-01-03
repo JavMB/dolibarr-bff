@@ -3,7 +3,7 @@ using DoliMiddlewareApi.Exceptions;
 
 namespace DoliMiddlewareApi.Services.Clients;
 
-public class DolibarrApiClient
+public class DolibarrApiClient : IDolibarrApiClient
 {
     private readonly HttpClient _httpClient;
 

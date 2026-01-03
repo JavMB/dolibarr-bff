@@ -22,7 +22,8 @@ builder.Services.AddSwaggerGen();
 
 
 // Typed Client - Inyecta HttpClient directamente en DolibarrApiClient
-builder.Services.AddHttpClient<DolibarrApiClient>(client =>
+// Registra la interfaz para poder hacer mock en tests
+builder.Services.AddHttpClient<IDolibarrApiClient, DolibarrApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Dolibarr:ApiUrl"]!);
     client.DefaultRequestHeaders.Add("DOLAPIKEY", builder.Configuration["Dolibarr:ApiKey"]!);
