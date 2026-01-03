@@ -1,40 +1,115 @@
 using DoliMiddlewareApi.Exceptions;
 using DoliMiddlewareApi.Services;
 using DoliMiddlewareApi.Services.Clients;
+using DoliMiddlewareApi.Services.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Diagnostics;
+
+// =========================================
+// PROGRAM.CS - CONFIGURACIÓN Y DEPENDENCIAS
+// =========================================
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+if (string.IsNullOrEmpty(builder.Configuration["Jwt:Secret"]))
+    throw new InvalidOperationException("JWT Secret is required in configuration. Set 'Jwt:Secret' in appsettings.json or environment variables.");
 
+// =========================================
+// 1. CONFIGURACIÓN DE SERVICIOS ASP.NET CORE
+// =========================================
+
+// Controllers + JSON (camelCase + enums as strings)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Serializar enums como strings en vez de números
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-
-        // Usar camelCase para propiedades (id en vez de Id)
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
-// Swagger/OpenAPI con Swashbuckle (genera schemas completos)
+
+// JWT Standard (ASP.NET auto-validation)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "DoliMiddleware",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "DoliClients",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-// Typed Client - Inyecta HttpClient directamente en DolibarrApiClient
-// Registra la interfaz para poder hacer mock en tests
-builder.Services.AddHttpClient<IDolibarrApiClient, DolibarrApiClient>(client =>
+// 2. DOLIBARR HTTP CLIENT
+// =========================================
+// HttpClient named para Dolibarr (configurado solo con BaseAddress)
+// DolibarrApiClient se crea manual porque necesita HttpClient + TokenCacheService
+//
+// POR QUÉ NO usar AddHttpClient<TClient>() directamente?
+// --------------------------------------------------------
+// HttpClient es COMPARTIDO entre todos los usuarios
+// Si configuramos el token ahí, el Usuario A usaría el token del Usuario B
+// Solución: TokenCacheService obtiene el token del USUARIO ACTUAL (del JWT)
+// factory.CreateClient("Dolibarr") devuelve el MISMO HttpClient reusado
+// No se crea un cliente por request, los headers son por request (thread-safe)
+// =========================================
+
+builder.Services.AddHttpClient("Dolibarr", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Dolibarr:ApiUrl"]!);
-    client.DefaultRequestHeaders.Add("DOLAPIKEY", builder.Configuration["Dolibarr:ApiKey"]!);
 });
 
-// Registrar servicios de negocio
+builder.Services.AddScoped<IDolibarrApiClient>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var client = factory.CreateClient("Dolibarr");
+    var tokenCacheService = sp.GetRequiredService<DolibarrTokenCacheService>();
+    return new DolibarrApiClient(client, tokenCacheService);
+});
+
+// =========================================
+// 3. REGISTRO DE SERVICIOS (DEPENDENCIAS)
+// =========================================
+
+// Servicio de negocio (facturas)
 builder.Services.AddScoped<InvoiceService>();
+
+// Servicio de aplicación (orquesta login + cache)
+builder.Services.AddScoped<AuthApplicationService>();
+
+// Servicio de autenticación con Dolibarr
+builder.Services.AddScoped<DolibarrAuthService>();
+
+// Servicio de cache de tokens de Dolibarr
+builder.Services.AddScoped<DolibarrTokenCacheService>();
+
+// Generador de JWT - Singleton porque es stateless
+builder.Services.AddSingleton<JwtTokenProvider>();
+
+// Cache en memoria para tokens (IMemoryCache)
+builder.Services.AddMemoryCache();
+
+// HttpContext accessor para acceder a User.Claims en servicios
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// Global exception handler
+// =========================================
+// 4. GLOBAL EXCEPTION HANDLER
+// =========================================
+
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -44,44 +119,36 @@ app.UseExceptionHandler(errorApp =>
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         var env = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
 
-        // PASO 1: Clasificar el tipo de error
+        // Clasificar el tipo de error
         var (statusCode, title, detail, isExpectedError) = exception switch
         {
-            // ERRORES ESPERADOS (del negocio/cliente) - OK mostrar detalles
             NotFoundException notFound => (StatusCodes.Status404NotFound, "Not Found", notFound.Message, true),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized", "Invalid API credentials", true),
             ForbiddenException forbidden => (StatusCodes.Status403Forbidden, "Forbidden", forbidden.Message, true),
             BadRequestException badRequest => (StatusCodes.Status400BadRequest, "Bad Request", badRequest.Message, true),
-            
-            // ERROR DE API EXTERNA (Dolibarr) - Mostrar que es externo pero no detalles internos
-            ApiException apiEx => (StatusCodes.Status500InternalServerError, "External Service Error", 
+            ApiException apiEx => (StatusCodes.Status500InternalServerError, "External Service Error",
                 env.IsDevelopment() ? apiEx.Message : "The external service is temporarily unavailable", false),
-            
-            // ERRORES INESPERADOS (bugs del programador) 
-            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", 
-                env.IsDevelopment() 
-                    ? exception?.Message ?? "An unexpected error occurred"  // DESARROLLO: muestra el error real
-                    : "An unexpected error occurred. Please try again later.", // PRODUCCIÓN: mensaje genérico
-                false)
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error",
+                env.IsDevelopment()
+                    ? exception?.Message ?? "An unexpected error occurred"
+                    : "An unexpected error occurred. Please try again later.", false)
         };
 
-        // PASO 2: SIEMPRE loguear (crítico para debugging en producción)
+        // Loguear siempre (crítico para debugging)
         if (isExpectedError)
         {
-            // Errores esperados: log como Warning (no son bugs, son flujo normal)
-            logger.LogWarning(exception, 
+            logger.LogWarning(exception,
                 "Expected error: {ExceptionType} | Path: {Path} | Message: {Message}",
                 exception?.GetType().Name, context.Request.Path, exception?.Message);
         }
         else
         {
-            // Errores inesperados: log como Error (son bugs que HAY QUE ARREGLAR)
-            logger.LogError(exception, 
+            logger.LogError(exception,
                 "UNHANDLED EXCEPTION: {ExceptionType} | Path: {Path} | Message: {Message} | StackTrace: {StackTrace}",
                 exception?.GetType().Name, context.Request.Path, exception?.Message, exception?.StackTrace);
         }
 
-        // PASO 3: Construir respuesta ProblemDetails (estándar RFC 7807)
+        // Construir respuesta ProblemDetails (RFC 7807)
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
 
@@ -93,7 +160,7 @@ app.UseExceptionHandler(errorApp =>
             Instance = context.Request.Path
         };
 
-        // PASO 4: EN DESARROLLO añadir info extra para debugging
+        // En desarrollo añadir info extra para debugging
         if (env.IsDevelopment() && !isExpectedError)
         {
             problemDetails.Extensions["exceptionType"] = exception?.GetType().Name;
@@ -109,7 +176,10 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-// Configure the HTTP request pipeline.
+// =========================================
+// 5. PIPELINE ASP.NET CORE
+// =========================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -121,6 +191,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllers();

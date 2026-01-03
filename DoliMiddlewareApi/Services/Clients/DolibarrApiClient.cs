@@ -1,22 +1,27 @@
 using System.Net;
 using DoliMiddlewareApi.Exceptions;
+using DoliMiddlewareApi.Services.Auth;
 
 namespace DoliMiddlewareApi.Services.Clients;
 
 public class DolibarrApiClient : IDolibarrApiClient
 {
     private readonly HttpClient _httpClient;
+    private readonly DolibarrTokenCacheService _tokenCacheService;
 
-    public DolibarrApiClient(HttpClient httpClient)
+    public DolibarrApiClient(HttpClient httpClient, DolibarrTokenCacheService tokenCacheService)
     {
         _httpClient = httpClient;
+        _tokenCacheService = tokenCacheService;
     }
-    
-    
+
+
     // ===== MÉTODOS GENÉRICOS =====
     public async Task<T> GetResourceAsync<T>(string endpoint) where T : class
     {
-        var response = await _httpClient.GetAsync(endpoint);
+        var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+        AddDolibarrTokenHeader(request);
+        var response = await _httpClient.SendAsync(request);
         await EnsureSuccessOrThrowAsync(response, endpoint);
 
         return await response.Content.ReadFromJsonAsync<T>()
@@ -25,29 +30,50 @@ public class DolibarrApiClient : IDolibarrApiClient
 
     public async Task<List<T>> GetCollectionAsync<T>(string endpoint) where T : class
     {
-        var response = await _httpClient.GetAsync(endpoint);
+        var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+        AddDolibarrTokenHeader(request);
+        var response = await _httpClient.SendAsync(request);
         await EnsureSuccessOrThrowAsync(response, endpoint);
 
         return await response.Content.ReadFromJsonAsync<List<T>>()
                ?? throw new ApiException(
                    $"Failed to deserialize list response from Dolibarr for endpoint '{endpoint}'");
     }
-    
+
     public async Task<string> PostAsync(string endpoint, object requestBody)
     {
-        var response = await _httpClient.PostAsJsonAsync(endpoint, requestBody);
+        var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        {
+            Content = JsonContent.Create(requestBody)
+        };
+        AddDolibarrTokenHeader(request);
+        var response = await _httpClient.SendAsync(request);
         await EnsureSuccessOrThrowAsync(response, endpoint);
 
         // porque devuelve el id como response
         return await response.Content.ReadAsStringAsync();
     }
-    
+
     public async Task<string> PutAsync(string endpoint, object requestBody)
     {
-        var response = await _httpClient.PutAsJsonAsync(endpoint, requestBody);
+        var request = new HttpRequestMessage(HttpMethod.Put, endpoint)
+        {
+            Content = JsonContent.Create(requestBody)
+        };
+        AddDolibarrTokenHeader(request);
+        var response = await _httpClient.SendAsync(request);
         await EnsureSuccessOrThrowAsync(response, endpoint);
-        
+
         return await response.Content.ReadAsStringAsync();
+    }
+
+    private void AddDolibarrTokenHeader(HttpRequestMessage request)
+    {
+        var dolibarrToken = _tokenCacheService.GetDolibarrToken();
+        if (!string.IsNullOrEmpty(dolibarrToken))
+        {
+            request.Headers.Add("DOLAPIKEY", dolibarrToken);
+        }
     }
     
     

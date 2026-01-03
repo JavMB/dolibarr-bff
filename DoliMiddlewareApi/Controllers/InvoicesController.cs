@@ -2,12 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.command;
 using DoliMiddlewareApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DoliMiddlewareApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] 
 public class InvoicesController : ControllerBase
 {
     private readonly InvoiceService _invoiceService;

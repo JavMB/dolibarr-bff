@@ -48,8 +48,8 @@ public class InvoiceService
             type = "0",
             statut = dto.Status == "unpaid" ? "1" : "0",
             date = ((DateTimeOffset)dto.Date).ToUnixTimeSeconds().ToString(),
-            date_lim_reglement = dto.ExpireDate.HasValue 
-                ? ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds().ToString() 
+            date_lim_reglement = dto.ExpireDate.HasValue
+                ? ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds().ToString()
                 : null,
             @ref = dto.Reference,
             note_public = dto.NotePublic,
@@ -64,7 +64,7 @@ public class InvoiceService
         };
 
         var responseBody = await _apiClient.PostAsync("invoices", requestBody);
-        
+
         return int.Parse(responseBody);
     }
 
