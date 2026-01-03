@@ -1,6 +1,7 @@
 using System.Globalization;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.Dolibarr;
+using DoliMiddlewareApi.Exceptions;
 
 namespace DoliMiddlewareApi.Mappers;
 
@@ -91,6 +92,18 @@ public static class InvoiceMapper
             "2" => "paid",
             "3" => "cancelled",
             _ => "unknown"
+        };
+    }
+
+    public static string ConvertStatusToDolibarr(string status)
+    {
+        return status.ToLower() switch
+        {
+            "draft" => "0",
+            "unpaid" => "1",
+            "paid" => "2",
+            "cancelled" => "3",
+            _ => throw new BadRequestException($"Estado inválido: {status}. Valores válidos: draft, unpaid, paid, cancelled")
         };
     }
 }

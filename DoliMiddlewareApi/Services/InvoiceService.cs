@@ -39,7 +39,7 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         {
             socid = dto.ClientId.ToString(),
             type = "0",
-            statut = dto.Status == "unpaid" ? "1" : "0",
+            statut = InvoiceMapper.ConvertStatusToDolibarr(dto.Status),
             date = ((DateTimeOffset)dto.Date).ToUnixTimeSeconds().ToString(),
             date_lim_reglement = dto.ExpireDate.HasValue
                 ? ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds().ToString()
@@ -87,12 +87,11 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         if (dto.Number != null) current.@ref = dto.Number;
         if (dto.NotePublic != null) current.note_public = dto.NotePublic;
         if (dto.NotePrivate != null) current.note_private = dto.NotePrivate;
-        current.statut = dto.Status == "unpaid" ? "1" : "0";
+        current.statut = InvoiceMapper.ConvertStatusToDolibarr(dto.Status);
         if (dto.ExpireDate.HasValue) current.date_lim_reglement = ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds();
 
         // No tocar: date, socid, lines (Dolibarr no los cambia en PUT)
 
         await apiClient.PutAsync($"invoices/{id}", current);
     }
-    
 }
