@@ -1,12 +1,12 @@
+using System.Text;
 using DoliMiddlewareApi.Exceptions;
 using DoliMiddlewareApi.Services;
-using DoliMiddlewareApi.Services.Clients;
 using DoliMiddlewareApi.Services.Auth;
+using DoliMiddlewareApi.Services.Clients;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 
 // =========================================
 // PROGRAM.CS - CONFIGURACIÓN Y DEPENDENCIAS
@@ -45,20 +45,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
- builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();
 
- // CORS Configuration
- builder.Services.AddCors(options =>
- {
-     options.AddPolicy("AllowVueApp",
-         policy => policy
-             .WithOrigins("http://localhost:3001", "http://localhost:3000")
-             .AllowAnyMethod()
-             .AllowAnyHeader()
-             .AllowCredentials());
- });
+// CORS Configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueApp",
+        policy => policy
+            .WithOrigins(
+                "http://localhost:3001",
+                "http://localhost:3000",
+                "http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
 
- // Swagger/OpenAPI
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
