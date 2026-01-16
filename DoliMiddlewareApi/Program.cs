@@ -45,9 +45,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+ builder.Services.AddAuthorization();
 
-// Swagger/OpenAPI
+ // CORS Configuration
+ builder.Services.AddCors(options =>
+ {
+     options.AddPolicy("AllowVueApp",
+         policy => policy
+             .WithOrigins("http://localhost:3001", "http://localhost:3000")
+             .AllowAnyMethod()
+             .AllowAnyHeader()
+             .AllowCredentials());
+ });
+
+ // Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -191,7 +202,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); 
+
+app.UseCors("AllowVueApp");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
