@@ -26,9 +26,10 @@ public class InvoicesController : ControllerBase
     public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
         [FromQuery] [Range(1, int.MaxValue)] int page = 1,
-        [FromQuery] string? status = null)
+        [FromQuery] string? status = null,
+        [FromQuery] [StringLength(100)] string? search = null)
     {
-        var invoices = await _invoiceService.GetInvoicesAsync(limit, page, status);
+        var invoices = await _invoiceService.GetInvoicesAsync(limit, page, status, search);
         return Ok(invoices);
     }
 

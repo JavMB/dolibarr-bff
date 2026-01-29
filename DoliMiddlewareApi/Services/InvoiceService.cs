@@ -19,7 +19,8 @@ public class InvoiceService(IDolibarrApiClient apiClient)
     public async Task<List<InvoiceDto>> GetInvoicesAsync(
         int limit = 50,
         int page = 1,
-        string? status = null)
+        string? status = null,
+        string? search = null)
     {
         // empieza por 1 para el frontend
         var endpoint = $"invoices?limit={limit}&page={page - 1}";
@@ -29,6 +30,13 @@ public class InvoiceService(IDolibarrApiClient apiClient)
             endpoint += $"&status={status}";
         }
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search=search.Trim().ToUpperInvariant();
+            var filter = $"(t.ref:like:'{search}%')";
+            endpoint += $"&sqlfilters={Uri.EscapeDataString(filter)}";
+        }
+        
         var dataList = await apiClient.GetCollectionAsync<InvoiceResponse>(endpoint);
         return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
     }
