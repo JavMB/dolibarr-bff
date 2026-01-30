@@ -10,15 +10,8 @@ namespace DoliMiddlewareApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize] 
-public class InvoicesController : ControllerBase
+public class InvoicesController(InvoiceService invoiceService) : ControllerBase
 {
-    private readonly InvoiceService _invoiceService;
-
-    public InvoicesController(InvoiceService invoiceService)
-    {
-        _invoiceService = invoiceService;
-    }
-
     [HttpGet]
     [ProducesResponseType(typeof(List<InvoiceDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -29,7 +22,7 @@ public class InvoicesController : ControllerBase
         [FromQuery] string? status = null,
         [FromQuery] [StringLength(100)] string? search = null)
     {
-        var invoices = await _invoiceService.GetInvoicesAsync(limit, page, status, search);
+        var invoices = await invoiceService.GetInvoicesAsync(limit, page, status, search);
         return Ok(invoices);
     }
 
@@ -40,7 +33,7 @@ public class InvoicesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<InvoiceDetailDto>> GetInvoice([Range(1, int.MaxValue)] int id)
     {
-        var invoice = await _invoiceService.GetInvoiceAsync(id);
+        var invoice = await invoiceService.GetInvoiceAsync(id);
         return Ok(invoice);
     }
 
@@ -50,7 +43,7 @@ public class InvoicesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<int>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
     {
-        var invoiceId= await _invoiceService.CreateInvoiceAsync(createInvoiceDto);
+        var invoiceId= await invoiceService.CreateInvoiceAsync(createInvoiceDto);
         return CreatedAtAction(nameof(GetInvoice), new { id = invoiceId }, invoiceId);
     }
 
@@ -62,7 +55,7 @@ public class InvoicesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateInvoice([Range(1, int.MaxValue)] int id, [FromBody] UpdateInvoiceDto updateInvoiceDto)
     {
-        await _invoiceService.UpdateInvoiceAsync(id, updateInvoiceDto);
+        await invoiceService.UpdateInvoiceAsync(id, updateInvoiceDto);
         return NoContent();
     }
 
@@ -74,7 +67,7 @@ public class InvoicesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<string>> AddInvoiceLine([Range(1, int.MaxValue)] int id, [FromBody] CreateInvoiceLineDto lineDto)
     {
-        var result = await _invoiceService.AddInvoiceLineAsync(id, lineDto);
+        var result = await invoiceService.AddInvoiceLineAsync(id, lineDto);
         return CreatedAtAction(nameof(GetInvoice), new { id }, result);
     }
 }

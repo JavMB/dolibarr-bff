@@ -100,6 +100,9 @@ builder.Services.AddScoped<IDolibarrApiClient>(sp =>
 // Servicio de negocio (facturas)
 builder.Services.AddScoped<InvoiceService>();
 
+// Servicio de negocio (clientes)
+builder.Services.AddScoped<ClientService>();
+
 // Servicio de aplicación (orquesta login + cache)
 builder.Services.AddScoped<AuthApplicationService>();
 
