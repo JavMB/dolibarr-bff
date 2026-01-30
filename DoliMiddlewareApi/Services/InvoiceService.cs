@@ -36,9 +36,22 @@ public class InvoiceService(IDolibarrApiClient apiClient)
             var filter = $"(t.ref:like:'{search}%')";
             endpoint += $"&sqlfilters={Uri.EscapeDataString(filter)}";
         }
-        
+
         var dataList = await apiClient.GetCollectionAsync<InvoiceResponse>(endpoint);
-        return dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
+        var invoices = dataList.Select(InvoiceMapper.MapToInvoiceDto).ToList();
+
+        if (invoices.Count == 0)
+            return invoices;
+
+        var clientIds = invoices.Select(i => i.ClientId).Distinct().ToList();
+        var clientNames = await GetClientNamesAsync(clientIds);
+
+        foreach (var invoice in invoices)
+        {
+            invoice.ClientName = clientNames.GetValueOrDefault(invoice.ClientId);
+        }
+
+        return invoices;
     }
 
     public async Task<int> CreateInvoiceAsync(CreateInvoiceDto dto)
@@ -101,5 +114,14 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         // No tocar: date, socid, lines (Dolibarr no los cambia en PUT)
 
         await apiClient.PutAsync($"invoices/{id}", current);
+    }
+
+    private async Task<Dictionary<int, string>> GetClientNamesAsync(List<int> clientIds)
+    {
+        var uniqueIds = clientIds.Distinct().ToList();
+        var tasks = uniqueIds.Select(id => apiClient.GetResourceAsync<ClientResponse>($"thirdparties/{id}"));
+        var clients = await Task.WhenAll(tasks);
+        return clients.Where(c => c is { id: not null })
+            .ToDictionary(c => int.Parse(c!.id!), c => c!.name ?? "");
     }
 }
