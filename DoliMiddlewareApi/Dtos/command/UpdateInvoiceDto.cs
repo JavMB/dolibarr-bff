@@ -14,7 +14,5 @@ public class UpdateInvoiceDto
     public string? NotePublic { get; set; }
     public string? NotePrivate { get; set; }
 
-    public string Status { get; set; } = "draft";
-
     // Lines quitadas - usa POST /lines para añadir líneas
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.command;
@@ -108,12 +109,25 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         if (dto.Number != null) current.@ref = dto.Number;
         if (dto.NotePublic != null) current.note_public = dto.NotePublic;
         if (dto.NotePrivate != null) current.note_private = dto.NotePrivate;
-        current.statut = InvoiceMapper.ConvertStatusToDolibarr(dto.Status);
         if (dto.ExpireDate.HasValue) current.date_lim_reglement = ((DateTimeOffset)dto.ExpireDate.Value).ToUnixTimeSeconds();
 
         // No tocar: date, socid, lines (Dolibarr no los cambia en PUT)
 
         await apiClient.PutAsync($"invoices/{id}", current);
+    }
+
+    public async Task ChangeInvoiceStatusAsync(int id, string status)
+    {
+        var normalized = status.Trim().ToLowerInvariant();
+        var endpoint = normalized switch
+        {
+            "draft" => $"invoices/{id}/settodraft",
+            "unpaid" => $"invoices/{id}/settounpaid",
+            "paid" => $"invoices/{id}/settopaid",
+            _ => throw new ValidationException("Estado invalido. Usa: draft, unpaid, paid.")
+        };
+
+        await apiClient.PostAsync(endpoint, new { });
     }
 
     private async Task<Dictionary<int, string>> GetClientNamesAsync(List<int> clientIds)
