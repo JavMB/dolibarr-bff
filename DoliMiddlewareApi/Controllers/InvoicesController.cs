@@ -9,7 +9,7 @@ namespace DoliMiddlewareApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] 
+[Authorize]
 public class InvoicesController(InvoiceService invoiceService) : ControllerBase
 {
     [HttpGet]
@@ -18,9 +18,9 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
-        [FromQuery] [Range(1, int.MaxValue)] int page = 1,
+        [FromQuery][Range(1, int.MaxValue)] int page = 1,
         [FromQuery] string? status = null,
-        [FromQuery] [StringLength(100)] string? search = null)
+        [FromQuery][StringLength(100)] string? search = null)
     {
         var invoices = await invoiceService.GetInvoicesAsync(limit, page, status, search);
         return Ok(invoices);
@@ -43,7 +43,7 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<int>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
     {
-        var invoiceId= await invoiceService.CreateInvoiceAsync(createInvoiceDto);
+        var invoiceId = await invoiceService.CreateInvoiceAsync(createInvoiceDto);
         return CreatedAtAction(nameof(GetInvoice), new { id = invoiceId }, invoiceId);
     }
 

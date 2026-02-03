@@ -65,10 +65,10 @@ public class DolibarrApiClient(HttpClient httpClient, DolibarrTokenCacheService 
             request.Headers.Add("DOLAPIKEY", dolibarrToken);
         }
     }
-    
-    
-    
-    
+
+
+
+
     private async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, string endpoint)
     {
         if (response.IsSuccessStatusCode) return;

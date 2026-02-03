@@ -6,11 +6,11 @@ public class CreateTokenDto
 {
     [Required]
     [StringLength(100)]
-    public string Username{get;set;}="";
+    public string Username { get; set; } = "";
     [Required]
     [StringLength(255)]
-    public string Password{get;set;}="";
-    
-    
-    
+    public string Password { get; set; } = "";
+
+
+
 }

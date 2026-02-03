@@ -33,7 +33,7 @@ public class InvoiceService(IDolibarrApiClient apiClient)
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            search=search.Trim().ToUpperInvariant();
+            search = search.Trim().ToUpperInvariant();
             var filter = $"(t.ref:like:'%{search}%')";
             endpoint += $"&sqlfilters={Uri.EscapeDataString(filter)}";
         }

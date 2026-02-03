@@ -8,7 +8,7 @@ namespace DoliMiddlewareApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] 
+[Authorize]
 public class ClientsController(ClientService clientService) : ControllerBase
 {
 
@@ -18,12 +18,12 @@ public class ClientsController(ClientService clientService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<ClientDto>>> GetClientes(
         [FromQuery] int limit = 50,
-        [FromQuery] [Range(1, int.MaxValue)] int page = 1)
+        [FromQuery][Range(1, int.MaxValue)] int page = 1)
     {
         var clients = await clientService.GetClientsAsync(limit, page);
         return Ok(clients);
     }
-    
-    
-    
+
+
+
 }

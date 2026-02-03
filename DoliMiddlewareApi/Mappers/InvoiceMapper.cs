@@ -93,7 +93,6 @@ public static class InvoiceMapper
             "0" => "draft",
             "1" => "unpaid",
             "2" => "paid",
-            "3" => "cancelled",
             _ => "unknown"
         };
     }
@@ -105,8 +104,7 @@ public static class InvoiceMapper
             "draft" => "0",
             "unpaid" => "1",
             "paid" => "2",
-            "cancelled" => "3",
-            _ => throw new BadRequestException($"Estado inválido: {status}. Valores válidos: draft, unpaid, paid, cancelled")
+            _ => throw new BadRequestException($"Estado inválido: {status}. Valores válidos: draft, unpaid, paid")
         };
     }
 }
