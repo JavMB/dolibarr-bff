@@ -11,4 +11,6 @@ public class InvoiceDetailDto
     public decimal? RemainToPay { get; set; }
     public string Status { get; set; }
     public List<InvoiceLineDto>? Lines { get; set; }
+    public string? note_public { get; set; }
+    public string? note_private { get; set; }
 }

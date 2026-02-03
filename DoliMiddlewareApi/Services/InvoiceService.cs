@@ -130,6 +130,14 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         await apiClient.PostAsync(endpoint, new { });
     }
 
+    public async Task ValidateInvoiceAsync(int id)
+    {
+        var invoice = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
+        if (invoice.statut != "0") throw new ForbiddenException("Solo se pueden validar facturas en borrador (draft)");
+
+        await apiClient.PostAsync($"invoices/{id}/validate", new { });
+    }
+
     private async Task<Dictionary<int, string>> GetClientNamesAsync(List<int> clientIds)
     {
         var uniqueIds = clientIds.Distinct().ToList();

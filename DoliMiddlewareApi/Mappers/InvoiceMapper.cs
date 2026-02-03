@@ -34,13 +34,14 @@ public static class InvoiceMapper
                 ? Math.Round(remain, 2)
                 : null,
 
-            Status = ConvertStatusToWord(invoiceResponse.statut)
+            Status = ConvertStatusToWord(invoiceResponse.statut),
+            note_public = invoiceResponse.note_public,
+            note_private = invoiceResponse.note_private
         };
     }
 
     public static InvoiceDetailDto MapToInvoiceDetailDto(InvoiceDetailResponse data)
     {
-        // Mapear campos base de la factura
         var baseDto = MapToInvoiceDto(data);
 
         return new InvoiceDetailDto
@@ -53,6 +54,8 @@ public static class InvoiceMapper
             Total = baseDto.Total,
             RemainToPay = baseDto.RemainToPay,
             Status = baseDto.Status,
+            note_public = baseDto.note_public,
+            note_private = baseDto.note_private,
 
             Lines = data.Lines?.Select(MapToInvoiceLineDto).ToList() ?? new List<InvoiceLineDto>()
         };
