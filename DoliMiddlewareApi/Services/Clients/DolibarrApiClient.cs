@@ -57,6 +57,14 @@ public class DolibarrApiClient(HttpClient httpClient, DolibarrTokenCacheService 
         return await response.Content.ReadAsStringAsync();
     }
 
+    public async Task DeleteAsync(string endpoint)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, endpoint);
+        AddDolibarrTokenHeader(request);
+        var response = await httpClient.SendAsync(request);
+        await EnsureSuccessOrThrowAsync(response, endpoint);
+    }
+
     private void AddDolibarrTokenHeader(HttpRequestMessage request)
     {
         var dolibarrToken = tokenCacheService.GetDolibarrToken();

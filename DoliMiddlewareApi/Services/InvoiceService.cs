@@ -138,6 +138,22 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         await apiClient.PostAsync($"invoices/{id}/validate", new { });
     }
 
+    public async Task DeleteInvoiceAsync(int id)
+    {
+        var invoice = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
+        if (invoice.statut != "0") throw new ForbiddenException("Solo se pueden eliminar facturas en borrador (draft)");
+
+        await apiClient.DeleteAsync($"invoices/{id}");
+    }
+
+    public async Task DeleteInvoiceLineAsync(int invoiceId, int lineId)
+    {
+        var invoice = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{invoiceId}");
+        if (invoice.statut != "0") throw new ForbiddenException("Solo se pueden eliminar líneas de facturas en borrador (draft)");
+
+        await apiClient.DeleteAsync($"invoices/{invoiceId}/lines/{lineId}");
+    }
+
     private async Task<Dictionary<int, string>> GetClientNamesAsync(List<int> clientIds)
     {
         var uniqueIds = clientIds.Distinct().ToList();

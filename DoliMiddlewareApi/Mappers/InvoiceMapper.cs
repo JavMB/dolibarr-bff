@@ -35,8 +35,8 @@ public static class InvoiceMapper
                 : null,
 
             Status = ConvertStatusToWord(invoiceResponse.statut),
-            note_public = invoiceResponse.note_public,
-            note_private = invoiceResponse.note_private
+            NotePublic = invoiceResponse.note_public,
+            NotePrivate = invoiceResponse.note_private
         };
     }
 
@@ -54,8 +54,8 @@ public static class InvoiceMapper
             Total = baseDto.Total,
             RemainToPay = baseDto.RemainToPay,
             Status = baseDto.Status,
-            note_public = baseDto.note_public,
-            note_private = baseDto.note_private,
+            NotePublic = baseDto.NotePublic,
+            NotePrivate = baseDto.NotePrivate,
 
             Lines = data.Lines?.Select(MapToInvoiceLineDto).ToList() ?? new List<InvoiceLineDto>()
         };

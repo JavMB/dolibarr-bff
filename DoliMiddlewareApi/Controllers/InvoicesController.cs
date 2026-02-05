@@ -96,4 +96,30 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
         await invoiceService.ValidateInvoiceAsync(id);
         return NoContent();
     }
+
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteInvoice([Range(1, int.MaxValue)] int id)
+    {
+        await invoiceService.DeleteInvoiceAsync(id);
+        return NoContent();
+    }
+
+    [HttpDelete("{invoiceId:int}/lines/{lineId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteInvoiceLine(
+        [Range(1, int.MaxValue)] int invoiceId,
+        [Range(1, int.MaxValue)] int lineId)
+    {
+        await invoiceService.DeleteInvoiceLineAsync(invoiceId, lineId);
+        return NoContent();
+    }
 }

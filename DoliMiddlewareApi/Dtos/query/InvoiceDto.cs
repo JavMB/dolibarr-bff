@@ -10,7 +10,7 @@ public class InvoiceDto
     public decimal? Total { get; set; }
     public decimal? RemainToPay { get; set; }
     public string Status { get; set; }
+    public string? NotePublic { get; set; }
+    public string? NotePrivate { get; set; }
     public string? ClientName { get; set; }
-    public string? note_public { get; set; }
-    public string? note_private { get; set; }
 }
