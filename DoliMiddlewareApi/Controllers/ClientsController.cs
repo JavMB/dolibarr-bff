@@ -13,9 +13,6 @@ public class ClientsController(ClientService clientService) : ControllerBase
 {
 
     [HttpGet]
-    [ProducesResponseType(typeof(List<ClientDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<ClientDto>>> GetClientes(
         [FromQuery] int limit = 50,
         [FromQuery][Range(1, int.MaxValue)] int page = 1)

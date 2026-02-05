@@ -13,9 +13,6 @@ namespace DoliMiddlewareApi.Controllers;
 public class InvoicesController(InvoiceService invoiceService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(List<InvoiceDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
         [FromQuery][Range(1, int.MaxValue)] int page = 1,
@@ -27,10 +24,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType(typeof(InvoiceDetailDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<InvoiceDetailDto>> GetInvoice([Range(1, int.MaxValue)] int id)
     {
         var invoice = await invoiceService.GetInvoiceAsync(id);
@@ -38,9 +31,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)] // Devuelve el ID creado
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<int>> CreateInvoice([FromBody] CreateInvoiceDto createInvoiceDto)
     {
         var invoiceId = await invoiceService.CreateInvoiceAsync(createInvoiceDto);
@@ -48,11 +38,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateInvoice([Range(1, int.MaxValue)] int id, [FromBody] UpdateInvoiceDto updateInvoiceDto)
     {
         await invoiceService.UpdateInvoiceAsync(id, updateInvoiceDto);
@@ -60,11 +45,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPost("{id:int}/lines")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<string>> AddInvoiceLine([Range(1, int.MaxValue)] int id, [FromBody] CreateInvoiceLineDto lineDto)
     {
         var result = await invoiceService.AddInvoiceLineAsync(id, lineDto);
@@ -72,11 +52,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPatch("{id:int}/status")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateInvoiceStatus(
         [Range(1, int.MaxValue)] int id,
         [FromBody] UpdateInvoiceStatusDto updateStatusDto)
@@ -86,11 +61,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPost("{id:int}/validate")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ValidateInvoice([Range(1, int.MaxValue)] int id)
     {
         await invoiceService.ValidateInvoiceAsync(id);
@@ -98,11 +68,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteInvoice([Range(1, int.MaxValue)] int id)
     {
         await invoiceService.DeleteInvoiceAsync(id);
@@ -110,11 +75,6 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpDelete("{invoiceId:int}/lines/{lineId:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteInvoiceLine(
         [Range(1, int.MaxValue)] int invoiceId,
         [Range(1, int.MaxValue)] int lineId)
