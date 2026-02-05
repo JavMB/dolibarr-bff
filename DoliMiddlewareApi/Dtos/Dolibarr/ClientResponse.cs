@@ -10,6 +10,12 @@ public class ClientResponse
     // Código cliente (CUxxxx)
     public string? code_client { get; set; }
 
+    // Tipo de entidad
+    public string? typent_code { get; set; }
+
+    // Estado
+    public string? status { get; set; }
+
     // Contacto
     public string? email { get; set; }
     public string? phone { get; set; }

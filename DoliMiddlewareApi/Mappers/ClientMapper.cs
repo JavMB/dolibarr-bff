@@ -15,6 +15,10 @@ public class ClientMapper
             Id = clientId,
             Name = clientResponse.name,
             CodeClient = clientResponse.code_client,
+            TypentCode = clientResponse.typent_code,
+            Status = clientResponse.status,
+            Email = clientResponse.email,
+            Phone = clientResponse.phone,
             Contacts = contacts.Where(c => c.ClientId == clientId).ToList()
         };
     }
@@ -25,7 +29,11 @@ public class ClientMapper
         {
             Id = int.TryParse(clientResponse.id, out int id) ? id : 0,
             Name = clientResponse.name,
-            CodeClient = clientResponse.code_client
+            CodeClient = clientResponse.code_client,
+            TypentCode = clientResponse.typent_code,
+            Status = clientResponse.status,
+            Email = clientResponse.email,
+            Phone = clientResponse.phone
         };
     }
 
