@@ -16,9 +16,9 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<InvoiceDto>>> GetInvoices(
         [FromQuery] int limit = 50,
-        [FromQuery][Range(1, int.MaxValue)] int page = 1,
+        [FromQuery] [Range(1, int.MaxValue)] int page = 1,
         [FromQuery] string? status = null,
-        [FromQuery][StringLength(100)] string? search = null)
+        [FromQuery] [StringLength(100)] string? search = null)
     {
         var invoices = await invoiceService.GetInvoicesAsync(limit, page, status, search);
         return Ok(invoices);
@@ -39,14 +39,16 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateInvoice([Range(1, int.MaxValue)] int id, [FromBody] UpdateInvoiceDto updateInvoiceDto)
+    public async Task<IActionResult> UpdateInvoice([Range(1, int.MaxValue)] int id,
+        [FromBody] UpdateInvoiceDto updateInvoiceDto)
     {
         await invoiceService.UpdateInvoiceAsync(id, updateInvoiceDto);
         return NoContent();
     }
 
     [HttpPost("{id:int}/lines")]
-    public async Task<ActionResult<string>> AddInvoiceLine([Range(1, int.MaxValue)] int id, [FromBody] CreateInvoiceLineDto lineDto)
+    public async Task<ActionResult<string>> AddInvoiceLine([Range(1, int.MaxValue)] int id,
+        [FromBody] CreateInvoiceLineDto lineDto)
     {
         var result = await invoiceService.AddInvoiceLineAsync(id, lineDto);
         return CreatedAtAction(nameof(GetInvoice), new { id }, result);
@@ -89,5 +91,14 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     {
         var payments = await invoiceService.GetInvoicePaymentsAsync(id);
         return Ok(payments);
+    }
+
+    [HttpPost("{id:int}/payments")]
+    public async Task<ActionResult<long>> AddPayment(
+        [Range(1, int.MaxValue)] int id,
+        [FromBody] CreateInvoicePaymentDto dto)
+    {
+        var paymentId = await invoiceService.AddInvoicePaymentAsync(id, dto);
+        return Ok(paymentId);
     }
 }

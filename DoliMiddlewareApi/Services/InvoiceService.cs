@@ -171,4 +171,45 @@ public class InvoiceService(IDolibarrApiClient apiClient)
 
         return payments;
     }
+    public async Task<int> AddInvoicePaymentAsync(int invoiceId, CreateInvoicePaymentDto dto)
+    {
+        // Usar paymentMethodId si viene, si no usar paymentModeId
+        var paymentModeId = dto.PaymentMethodId ?? dto.PaymentModeId;
+
+        if (dto.Amount.HasValue)
+        {
+            // Pago parcial: usar /invoices/paymentsdistributed
+            var requestBody = new
+            {
+                arrayofamounts = new Dictionary<string, object>
+                {
+                    {
+                        invoiceId.ToString(),
+                        new { amount = dto.Amount.Value.ToString(CultureInfo.InvariantCulture) }
+                    }
+                },
+                datepaye = dto.PaymentDate.ToString("yyyy-MM-dd"),
+                paymentid = paymentModeId,
+                closepaidinvoices = dto.ClosePaidInvoices,
+                accountid = dto.AccountId,
+                num_payment = dto.PaymentNumber,
+            };
+            var responseBody = await apiClient.PostAsync("invoices/paymentsdistributed", requestBody);
+            return int.Parse(responseBody);
+        }
+        else
+        {
+            // Pagar completa pendiente: usar /invoices/{id}/payments
+            var requestBody = new
+            {
+                datepaye = dto.PaymentDate.ToString("yyyy-MM-dd"),
+                paymentid = paymentModeId,
+                closepaidinvoices = dto.ClosePaidInvoices,
+                accountid = dto.AccountId,
+                num_payment = dto.PaymentNumber,
+            };
+            var responseBody = await apiClient.PostAsync($"invoices/{invoiceId}/payments", requestBody);
+            return int.Parse(responseBody);
+        }
+    }
 }
