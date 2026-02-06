@@ -118,11 +118,11 @@ public static class InvoiceMapper
         {
             Ref = response.@ref ?? "",
             PaymentDate = DateTime.TryParseExact(response.date, "yyyy-MM-dd HH:mm:ss", 
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : DateTime.MinValue,
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? DateOnly.FromDateTime(date) : DateOnly.MinValue,
             Type = response.type ?? "",
             TransactionNum = response.num ?? "",
             Amount = decimal.TryParse(response.amount, NumberStyles.Any, CultureInfo.InvariantCulture,
-                out decimal amount) ? (int)Math.Round(amount, 0) : 0
+                out decimal amount) ? Math.Round(amount, 2) : 0
         };
     }
 }
