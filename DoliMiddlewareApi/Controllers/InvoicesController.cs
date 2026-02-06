@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.command;
+using DoliMiddlewareApi.Dtos.query;
 using DoliMiddlewareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -81,5 +82,12 @@ public class InvoicesController(InvoiceService invoiceService) : ControllerBase
     {
         await invoiceService.DeleteInvoiceLineAsync(invoiceId, lineId);
         return NoContent();
+    }
+
+    [HttpGet("{id:int}/payments")]
+    public async Task<ActionResult<List<InvoicePaymentDto>>> GetInvoicePayments([Range(1, int.MaxValue)] int id)
+    {
+        var payments = await invoiceService.GetInvoicePaymentsAsync(id);
+        return Ok(payments);
     }
 }

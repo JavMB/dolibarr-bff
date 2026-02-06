@@ -1,6 +1,7 @@
 using System.Globalization;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.Dolibarr;
+using DoliMiddlewareApi.Dtos.query;
 using DoliMiddlewareApi.Exceptions;
 
 namespace DoliMiddlewareApi.Mappers;
@@ -85,6 +86,8 @@ public static class InvoiceMapper
                 : 0
         };
     }
+    
+   
 
     private static string ConvertStatusToWord(string? statusNumber)
     {
@@ -105,6 +108,21 @@ public static class InvoiceMapper
             "unpaid" => "1",
             "paid" => "2",
             _ => throw new BadRequestException($"Estado inválido: {status}. Valores válidos: draft, unpaid, paid")
+        };
+    }
+
+
+    public static InvoicePaymentDto MapToInvoicePaymentDto(InvoicePaymentResponse response)
+    {
+        return new InvoicePaymentDto
+        {
+            Ref = response.@ref ?? "",
+            PaymentDate = DateTime.TryParseExact(response.date, "yyyy-MM-dd HH:mm:ss", 
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date : DateTime.MinValue,
+            Type = response.type ?? "",
+            TransactionNum = response.num ?? "",
+            Amount = decimal.TryParse(response.amount, NumberStyles.Any, CultureInfo.InvariantCulture,
+                out decimal amount) ? (int)Math.Round(amount, 0) : 0
         };
     }
 }

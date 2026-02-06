@@ -3,6 +3,7 @@ using System.Globalization;
 using DoliMiddlewareApi.Dtos;
 using DoliMiddlewareApi.Dtos.command;
 using DoliMiddlewareApi.Dtos.Dolibarr;
+using DoliMiddlewareApi.Dtos.query;
 using DoliMiddlewareApi.Exceptions;
 using DoliMiddlewareApi.Mappers;
 using DoliMiddlewareApi.Services.Clients;
@@ -161,5 +162,13 @@ public class InvoiceService(IDolibarrApiClient apiClient)
         var clients = await Task.WhenAll(tasks);
         return clients.Where(c => c is { id: not null })
             .ToDictionary(c => int.Parse(c!.id!), c => c!.name ?? "");
+    }
+
+    public async Task<List<InvoicePaymentDto>> GetInvoicePaymentsAsync(int invoiceId)
+    {
+        var dataList = await apiClient.GetCollectionAsync<InvoicePaymentResponse>($"invoices/{invoiceId}/payments");
+        var payments = dataList.Select(InvoiceMapper.MapToInvoicePaymentDto).ToList();
+
+        return payments;
     }
 }
