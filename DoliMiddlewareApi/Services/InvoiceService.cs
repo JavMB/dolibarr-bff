@@ -104,7 +104,6 @@ public class InvoiceService(IDolibarrApiClient apiClient)
     {
         // GET el JSON completo
         var current = await apiClient.GetResourceAsync<InvoiceDetailResponse>($"invoices/{id}");
-        if (current.statut != "0") throw new ForbiddenException("Solo drafts");
 
         // Modifica solo campos que Dolibarr permite en PUT
         if (dto.Number != null) current.@ref = dto.Number;
