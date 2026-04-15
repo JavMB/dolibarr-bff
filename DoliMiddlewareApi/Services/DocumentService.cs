@@ -18,6 +18,17 @@ namespace DoliMiddlewareApi.Services
 
             await apiClient.PutAsync("documents/builddoc",request);
         }
-        
+
+        public async Task<bool> ExistsAsync(string invoiceRef)
+        {
+            var file = $"¨{invoiceRef}/{invoiceRef}.pdf";
+
+            var endpoint = $"documents?modulepart=invoice&id={invoiceRef}";
+
+            var docs = await apiClient.GetCollectionAsync<string>(endpoint);
+
+            return docs.Contains(file);
+
+        }
     }
 }
