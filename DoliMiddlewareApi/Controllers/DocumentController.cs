@@ -9,18 +9,12 @@ namespace DoliMiddlewareApi.Controllers
     public class DocumentController(DocumentService documentService) : ControllerBase
     {
 
-        [HttpPut("invoice/{invoiceRef}/build")]
-        public async Task<IActionResult> BuildInvoicePdf(string invoiceRef)
+        [HttpGet("invoice/{invoiceRef}/pdf")]
+        public async Task<IActionResult> GetInvoicePdf(string invoiceRef)
         {
-            await documentService.BuildInvoicePdfAsync(invoiceRef);
+            var (content, filename) = await documentService.BuildInvoicePdfAsync(invoiceRef);
 
-            var exists = await documentService.ExistsAsync(invoiceRef);
-
-            return Ok(new
-            {
-                generated = exists,
-                invoiceRef
-            });
+            return File(content, "application/pdf", filename);
         }
 
     }

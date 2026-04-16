@@ -103,6 +103,8 @@ builder.Services.AddScoped<InvoiceService>();
 // Servicio de negocio (clientes)
 builder.Services.AddScoped<ClientService>();
 
+builder.Services.AddScoped<DocumentService>();
+
 // Servicio de aplicación (orquesta login + cache)
 builder.Services.AddScoped<AuthApplicationService>();
 

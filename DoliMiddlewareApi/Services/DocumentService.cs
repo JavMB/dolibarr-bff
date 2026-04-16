@@ -1,34 +1,30 @@
 ﻿using DoliMiddlewareApi.Dtos.command;
+using DoliMiddlewareApi.Dtos.Dolibarr;
 using DoliMiddlewareApi.Services.Clients;
+using System.Text.Json;
 
-namespace DoliMiddlewareApi.Services
+public class DocumentService(IDolibarrApiClient apiClient)
 {
-    public class DocumentService(IDolibarrApiClient apiClient)
+    public async Task<(byte[] content, string filename)> BuildInvoicePdfAsync(string invoiceRef)
     {
-
-        public async Task BuildInvoicePdfAsync(string invoiceRef)
+        var request = new BuildDocumentRequest
         {
-            var request = new BuildDocumentRequest
-            {
-                modulepart = "invoice",
-                original_file = $"{invoiceRef}/{invoiceRef}.pdf",
-                doctemplate = "crabe",
-                langcode = "es_ES"
-            };
+            modulepart = "invoice",
+            original_file = $"{invoiceRef}/{invoiceRef}.pdf",
+            doctemplate = "crabe",
+            langcode = "es_ES"
+        };
 
-            await apiClient.PutAsync("documents/builddoc",request);
-        }
+        var response = await apiClient.PutAsync("documents/builddoc", request);
 
-        public async Task<bool> ExistsAsync(string invoiceRef)
-        {
-            var file = $"¨{invoiceRef}/{invoiceRef}.pdf";
+        var result = JsonSerializer.Deserialize<DolibarrPdfResponse>(response);
 
-            var endpoint = $"documents?modulepart=invoice&id={invoiceRef}";
+        if (result == null || string.IsNullOrEmpty(result.content))
+            throw new Exception("Dolibarr no devolvió PDF");
 
-            var docs = await apiClient.GetCollectionAsync<string>(endpoint);
+        var bytes = Convert.FromBase64String(result.content);
 
-            return docs.Contains(file);
-
-        }
+        return (bytes, result.filename);
     }
+
 }
